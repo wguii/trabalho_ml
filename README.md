@@ -41,10 +41,15 @@ Cada registro representa uma amostra de vinho com atributos físico-químicos (p
      - Linear Regression
      - Random Forest Regressor (com ajuste de hiperparâmetros via `GridSearchCV`)
      - SVR (Support Vector Regressor)
+     
+    ![regression](https://github.com/user-attachments/assets/eb8d86f5-97c5-417d-b7bd-e013cbd244ad)
+
    - **Classificação:**
      - Random Forest Classifier
      - Oversampling com `SMOTE` para balanceamento de classes.
      - Ajuste de hiperparâmetros com `GridSearchCV`.
+   
+   ![class](https://github.com/user-attachments/assets/dabeb7b4-bf8c-4fef-8dd5-a413916a55d6)
 
 4. **Métricas de Avaliação**
    - Regressão: RMSE, MAE, R².
