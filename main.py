@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import classification_report, confusion_matrix
 
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.svm import SVR, SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -229,7 +229,7 @@ modelos_classifiers = {
 for name, clf in modelos_classifiers.items():
     clf.fit(X_train_res, y_train_res)
     y_pred_cls = clf.predict(X_test_cls)
-    print(f"Model: {name}")
+    print(f"Modelo: {name}")
     print(classification_report(y_test_cls, y_pred_cls, target_names=le.classes_))
     print(confusion_matrix(y_test_cls, y_pred_cls))
     print('-'*30)
@@ -237,7 +237,7 @@ for name, clf in modelos_classifiers.items():
 
 #Novamente Random Forest foi o melhor modelo, tunando:
 
-param_grid_cls = {
+'''param_grid_cls = {
     'n_estimators': [100, 300, 500],
     'max_depth': [None, 10, 20, 30],
     'min_samples_split': [2, 5, 10],
@@ -249,7 +249,7 @@ param_grid_cls = {
 grid_search_cls = GridSearchCV(
     RandomForestClassifier(random_state=42),
     param_grid_cls,
-    cv=5,                    
+    cv=3,                    
     scoring='accuracy',
     n_jobs=-1,
     verbose=2
@@ -263,10 +263,59 @@ best_clf = grid_search_cls.best_estimator_
 y_pred_best_cls = best_clf.predict(X_test_cls)
 print("Random Forest com hiperparâmetros tunados:", classification_report(y_test_cls, y_pred_best_cls, target_names=le.classes_))
 
+#Melhores parâmetros: {'bootstrap': False, 'max_depth': 30, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
+
+#Random Forest com hiperparâmetros tunados:   precision    recall  f1-score   support
+
+#        Alta       0.66      0.69      0.68       248
+#       Baixa       0.00      0.00      0.00         7
+#       Média       0.92      0.92      0.92      1045
+#
+#    accuracy                           0.87      1300
+#   macro avg       0.53      0.54      0.53      1300
+#weighted avg       0.87      0.87      0.87      1300'''
 
 
+#Aplicando modelo tunado
+
+melhor_rf_cls = RandomForestClassifier(
+    bootstrap=False,
+    max_depth=30,
+    max_features='sqrt',
+    min_samples_leaf=1,
+    min_samples_split=2,
+    n_estimators=500,
+    random_state=42
+)
+
+melhor_rf_cls.fit(X_train_res, y_train_res)
+y_pred_final = melhor_rf_cls.predict(X_test_cls)
+
+# Métricas
+
+print("Modelo Random Forest Tunado: ", classification_report(y_test_cls, y_pred_final, target_names=le.classes_))
+
+cm = confusion_matrix(y_test_cls, y_pred_final)
+plt.figure(figsize=(6, 4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=le.classes_, yticklabels=le.classes_)
+plt.xlabel('Predito')
+plt.ylabel('Real')
+plt.title('Matriz de Confusão Random Forest Tunado')
+plt.show()
 
 
+#Coeficientes e feature importance
+
+importances = melhor_rf_cls.feature_importances_
+feat_imp = pd.Series(importances, index=X_classificacao.columns).sort_values(ascending=False)
+
+plt.figure(figsize=(10,6))
+feat_imp.plot(kind='bar')
+plt.title('Importância das Variáveis no Random Forest Classificador Tunado')
+plt.ylabel('Importância')
+plt.show()
+
+#Resultados muito similares ao os modelos regressores
 
 
 
