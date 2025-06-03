@@ -71,6 +71,9 @@ Cada registro representa uma amostra de vinho com atributos físico-químicos (p
 ```bash```
 pip install -r requirements.txt
 
+Execute:
+python main.py
+
 
 
 ## Link para o repo do projeto: https://github.com/wguii/trabalho_ml.git
