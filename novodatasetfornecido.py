@@ -19,39 +19,42 @@ from imblearn.over_sampling import SMOTE
 from scipy import stats
 
 
-red = pd.read_csv('winequality-red.csv', sep=';')
-white = pd.read_csv('winequality-white.csv', sep=';')
-
-
-#Concatenando os dois datasets
-red['type'] = 'red'
-white['type'] = 'white'
-vinho = pd.concat([red, white])
-vinho = vinho.sample(frac=1).reset_index(drop=True)
+vinho = pd.read_csv("group_15_winequality.csv")
 
 #Transformando as strings em números para performar os algoritmos
 for col in vinho.columns:
     if col == "type":
         continue
     vinho[col] = pd.to_numeric(vinho[col], errors='coerce')
-    
+
+
+#Dropando Nans    
 vinho = vinho.dropna()
 
+#Convertendo feature binária para int
 vinho["type"] = (vinho["type"] == "red").astype(int)
 
 
+#Tratamento de outliers usando z-score
+z_scores = np.abs(stats.zscore(vinho.select_dtypes(include=np.number)))
+df_clean = vinho[(z_scores < 3).all(axis=1)].copy()
 
+'''features = vinho.columns.drop('quality') 
 
-#Tratamento de outliers aparentou ser prejudicial para o modelo
+plt.figure(figsize=(24, 18))
 
+for i, feature in enumerate(features):
+    plt.subplot(3, 4, i+1)
+    sns.boxplot(x='quality', y=feature, data=vinho)
+    plt.title(f'{feature} vs Quality', fontsize=12)
 
+plt.tight_layout()
+plt.subplots_adjust(top=0.95, hspace=0.5, wspace=0.4)
+plt.show()'''
 
-'''sns.histplot(vinho['quality'], bins=10)
-plt.title('Distribuição da qualidade dos vinhos')
-plt.show()
 
 # Matriz de correlação
-plt.figure(figsize=(12,10))
+'''plt.figure(figsize=(12,10))
 sns.heatmap(vinho.corr(), annot=True, cmap='coolwarm')
 plt.title('Matriz de Correlação')
 plt.show()'''
@@ -61,12 +64,12 @@ plt.show()'''
 
 
 #Aplicando padronização
-X = vinho.drop(["quality", "type"], axis=1) #Evitando a coluna target e as colunas já padronizadas
+X = df_clean.drop(["quality", "type"], axis=1) #Evitando a coluna target e as colunas já padronizadas
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 #Setando o target
-y = vinho["quality"]
+y = df_clean["quality"]
 
 #Definindo o treino/teste ratio do dataset
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2)
@@ -104,12 +107,12 @@ for name, model in modelos.items():
     'bootstrap': [True, False]
 }
 
-rf = RandomForestRegressor(random_state=42)
+rf = RandomForestRegressor()
 
 grid_search = GridSearchCV(
     estimator=rf,
     param_grid=param_grid,
-    cv=5,
+    cv=3,
     scoring='r2',
     n_jobs=-1,
     verbose=2
@@ -126,18 +129,18 @@ print(f"RMSE dps do GridSearch: {np.sqrt(mean_squared_error(y_test, y_pred_best)
 print(f"MAE dps do GridSearch: {mean_absolute_error(y_test, y_pred_best):.3f}")
 print(f"R2 dps do GridSearch: {r2_score(y_test, y_pred_best):.3f}")'''
 
-#Melhores parâmetros encontrados: {'bootstrap': False, 'max_depth': 20, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
-#RMSE dps do GridSearch: 0.540
-#MAE dps do GridSearch: 0.358
-#R2 dps do GridSearch: 0.584
+#Melhores parâmetros encontrados: {'bootstrap': False, 'max_depth': None, 'max_features': 'log2', 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 200}
+#RMSE dps do GridSearch: 0.670
+#MAE dps do GridSearch: 0.452
+#R2 dps do GridSearch: 0.441
 
 melhor_rf = RandomForestRegressor(
     bootstrap=False,
-    max_depth=20,
-    max_features='sqrt',
-    min_samples_leaf=1,
+    max_depth=None,
+    max_features='log2',
+    min_samples_leaf=4,
     min_samples_split=2,
-    n_estimators=500,
+    n_estimators=200,
 )
 
 melhor_rf.fit(X_train, y_train)
@@ -157,13 +160,13 @@ print('-'*30)
 #Coeficientes e feature importance
 
 '''importances = melhor_rf.feature_importances_
-features = X
+features = X.columns
 feat_imp = pd.Series(importances, index=features).sort_values(ascending=False)
-print(feat_imp)'''
+print(feat_imp)
 
-#A feature "alcohol" parece ser claramente a feature mais importante para o Random Forest já tunado, com 17,6% de importância, seguido de "density" e "volatile acidity", com 11,4% e 11,1%, respectivamente.
+#A feature "alcohol" parece ser claramente a feature mais importante para o Random Forest já tunado, com 25,3% de importância, seguido de "density" e "volatile acidity", com 10,5% e 08,7%, respectivamente.
 
-'''plt.figure(figsize=(10,6))
+plt.figure(figsize=(10,6))
 feat_imp.plot(kind='bar')
 plt.title('Importância das Variáveis no Random Forest Tunado')
 plt.ylabel('Importância')
@@ -180,25 +183,25 @@ plt.show()'''
 
 #Definindo as categorias e aplicando como uma coluna no modelo
 def categorize(q):
-    if q <= 3:
+    if q <= 4:
         return 'Baixa'
     elif q <= 6:
         return 'Média'
     else:
         return 'Alta'
 
-vinho['quality_categorizado'] = vinho['quality'].apply(categorize)
+df_clean['quality_categorizado'] = df_clean['quality'].apply(categorize)
 
 
 #Plotando as categorias
-sns.countplot(x='quality_categorizado', data=vinho)
+sns.countplot(x='quality_categorizado', data=df_clean)
 plt.title('Distribuição das classes de qualidade')
 plt.show()
 
 
 #Setando X e y
-X_classificacao = vinho.drop(["quality", "type", "quality_categorizado"], axis=1)
-y_classificacao = vinho["quality_categorizado"]
+X_classificacao = df_clean.drop(["quality", "type", "quality_categorizado"], axis=1)
+y_classificacao = df_clean["quality_categorizado"]
 
 #Rótulos e padronização antes do split
 le = LabelEncoder()
@@ -261,19 +264,18 @@ print("Melhores parâmetros:", grid_search_cls.best_params_)
 best_clf = grid_search_cls.best_estimator_
 
 y_pred_best_cls = best_clf.predict(X_test_cls)
-print("Random Forest com hiperparâmetros tunados:", classification_report(y_test_cls, y_pred_best_cls, target_names=le.classes_))
+print("Random Forest com hiperparâmetros tunados:", classification_report(y_test_cls, y_pred_best_cls, target_names=le.classes_))'''
 
-#Melhores parâmetros: {'bootstrap': False, 'max_depth': 30, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
+#Melhores parâmetros: {'bootstrap': False, 'max_depth': 30, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 300}
+#Random Forest com hiperparâmetros tunados:               precision    recall  f1-score   support
 
-#Random Forest com hiperparâmetros tunados:   precision    recall  f1-score   support
-
-#        Alta       0.66      0.69      0.68       248
+#        Alta       0.68      0.70      0.69       244
 #       Baixa       0.00      0.00      0.00         7
-#       Média       0.92      0.92      0.92      1045
-#
-#    accuracy                           0.87      1300
-#   macro avg       0.53      0.54      0.53      1300
-#weighted avg       0.87      0.87      0.87      1300'''
+#      Média       0.92      0.92      0.92      1004
+
+#    accuracy                           0.87      1255
+#   macro avg       0.53      0.54      0.54      1255
+# weighted avg       0.87      0.87      0.87      1255
 
 
 #Aplicando modelo tunado
@@ -284,8 +286,7 @@ melhor_rf_cls = RandomForestClassifier(
     max_features='sqrt',
     min_samples_leaf=1,
     min_samples_split=2,
-    n_estimators=500,
-    random_state=42
+    n_estimators=300,
 )
 
 melhor_rf_cls.fit(X_train_res, y_train_res)
@@ -308,6 +309,7 @@ plt.show()
 
 importances = melhor_rf_cls.feature_importances_
 feat_imp = pd.Series(importances, index=X_classificacao.columns).sort_values(ascending=False)
+print(feat_imp)
 
 plt.figure(figsize=(10,6))
 feat_imp.plot(kind='bar')
@@ -315,7 +317,7 @@ plt.title('Importância das Variáveis no Random Forest Classificador Tunado')
 plt.ylabel('Importância')
 plt.show()
 
-#Resultados muito similares ao dos modelos regressores
+#"alcohol" ainda continua sendo a feature mais importante com 13,3%, mas dessa vez, a distribuição da importância está bem mais homogênea, com "free sulfur dioxide" logo atrás com 12,3% e "density" com 12%.
 
 
 
