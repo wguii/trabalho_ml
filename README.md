@@ -30,6 +30,8 @@ Cada registro representa uma amostra de vinho com atributos físico-químicos (p
    - Padronização das variáveis numéricas com `StandardScaler`.
    - Criação da variável categórica `quality_categorizado` para classificação.
 
+![pre_process](https://github.com/user-attachments/assets/c4b76910-ec82-4e9f-9e9b-ac67063e5247)
+
 2. **Análise Exploratória**
    - Boxplots e gráficos de distribuição.
    - Matriz de correlação.
@@ -63,3 +65,5 @@ Cada registro representa uma amostra de vinho com atributos físico-químicos (p
 
 ```bash
 pip install -r requirements.txt
+
+Link para o repo do projeto: https://github.com/wguii/trabalho_ml.git
