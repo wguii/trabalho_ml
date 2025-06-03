@@ -5,10 +5,9 @@ Projeto de **predição e classificação da qualidade de vinhos tintos e branco
 ## Objetivos
 
 - Predizer a qualidade de vinhos com algoritmos de regressão.
-- Categorizar a qualidade em classes: **Baixa**, **Média** e **Alta**.
+- Categorizar a qualidade em três possíveis classes: **Baixa**, **Média** e **Alta**.
 - Avaliar a performance de diferentes algoritmos.
-- Realizar otimização de hiperparâmetros.
-- Explorar a importância das variáveis mais relevantes no processo.
+- Otimização de hiperparâmetros.
 
 ## Dataset
 
@@ -60,8 +59,7 @@ Cada registro representa uma amostra de vinho com atributos físico-químicos (p
 
 ## Como rodar o projeto
 
-1. Clone o repositório ou baixe os arquivos.
-2. Instale as dependências:
+1. Clone o repositório ou baixe os arquivos e instale as dependências:
 
 ```bash
 pip install -r requirements.txt
